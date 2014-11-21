@@ -4,9 +4,6 @@ use rust_crypto::md5::Md5;
 use rust_crypto::digest::Digest;
 
 
-static root_path: &'static str = "_documents";
-
-
 pub trait DataStore {
   fn write(&self, data: &[u8]) -> ();
 }
