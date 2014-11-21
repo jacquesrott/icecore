@@ -32,7 +32,7 @@ impl DataStore for FileStore{
     hash.input(data);
     let mut hashbits: [u8, ..16] = [0u8, ..16];
     hash.result(&mut hashbits);
-    let root: Path = Path::new(&root_path);
+    let root: Path = Path::new(self.path.as_slice());
     let path = root.join(hashbits.as_slice().to_hex());
 
     let mut file = File::create(&path);
