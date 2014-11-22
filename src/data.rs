@@ -32,7 +32,7 @@ impl FileStore{
 
 
 impl DataStore for FileStore{
-    fn write(&self, content: &[u8]){
+    fn write(&self, data: &[u8]){
         let mut hash = Md5::new();
         hash.input(data);
 
