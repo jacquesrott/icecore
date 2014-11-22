@@ -8,7 +8,7 @@ use std::os;
 
 fn insert(data: &str) {
     let store = FileStore::new("./_documents");
-    store.write(data.as_bytes());
+    store.write(data);
 }
 
 

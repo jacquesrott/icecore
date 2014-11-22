@@ -6,7 +6,7 @@ use rust_crypto::digest::Digest;
 
 
 pub trait DataStore {
-    fn write(&self, data: &[u8]) -> ();
+    fn write(&self, data: &str) -> ();
 }
 
 
@@ -32,9 +32,10 @@ impl FileStore{
 
 
 impl DataStore for FileStore{
-    fn write(&self, data: &[u8]){
+    fn write(&self, data: &str){
+        let data_bytes = data.as_bytes();
         let mut hash = Md5::new();
-        hash.input(data);
+        hash.input(data_bytes);
 
         let mut hashbits = [0u8, ..16];
         hash.result(&mut hashbits);
@@ -45,10 +46,12 @@ impl DataStore for FileStore{
             Ok(f) => f,
             Err(e) => panic!("File error: {}", e),
         };
+        println!("Created:\t\"{}\"", path.display());
 
-        match file.write(data) {
+        match file.write(data_bytes) {
             Ok(_) => {},
             Err(e) => panic!("File error: {}", e),
         };
+        println!("Wrote:\t\t\"{}\"", data);
     }
 }
