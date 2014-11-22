@@ -6,7 +6,8 @@ use rust_crypto::digest::Digest;
 
 
 pub trait DataStore {
-    fn write(&self, data: &str) -> ();
+    fn write(&self, data: &[u8]) -> String;
+    fn read(&self, hash: &String) -> Vec<u8>;
 }
 
 
@@ -28,19 +29,23 @@ impl FileStore{
             root: root,
         }
     }
+
+    fn get_path(&self, hash: &String) -> Path {
+        self.path.clone().join(hash)
+    }
 }
 
 
 impl DataStore for FileStore{
-    fn write(&self, data: &str){
-        let data_bytes = data.as_bytes();
-        let mut hash = Md5::new();
-        hash.input(data_bytes);
+    fn write(&self, data: &[u8]) -> String{
+        let mut h = Md5::new();
+        h.input(data);
 
-        let mut hashbits = [0u8, ..16];
-        hash.result(&mut hashbits);
+        let mut hashbits: [u8, ..16] = [0u8, ..16];
+        h.result(&mut hashbits);
 
-        let path = self.root.join(hashbits.as_slice().to_hex());
+        let data_hash = hashbits.as_slice().to_hex();
+        let path = self.root.join(data_hash);
 
         let mut file = match File::create(&path) {
             Ok(f) => f,
@@ -53,5 +58,12 @@ impl DataStore for FileStore{
             Err(e) => panic!("File error: {}", e),
         };
         println!("Wrote:\t\t\"{}\"", data);
+        data_hash
+    }
+
+    fn read(&self, hash: &String) -> Vec<u8>{
+        println!("read {}", hash);
+        let path = self.get_path(hash);
+        File::open(&path).read_to_end().unwrap()
     }
 }
