@@ -1,5 +1,6 @@
 use std::io::{File};
 use std::io::fs::PathExtensions;
+use std::slice::{Found, NotFound};
 use data::DataStore;
 
 pub struct Document{
@@ -8,14 +9,45 @@ pub struct Document{
     hash: String,
 }
 
+
+impl Document {
+    pub fn cmp_version(&self, other: u64) -> Ordering {
+        if self.version == other {
+            Equal
+        } else if self.version < other {
+            Less
+        } else {
+            Greater
+        }
+    }
+}
+
+
 pub struct Transaction{
     version: u64,
 }
 
 
-pub struct VersionIndex{
+pub struct VersionIndex {
     document_id: u64,
     versions: Vec<Document>,
+}
+
+
+impl VersionIndex {
+    pub fn find_version(&self, id: u64) -> Option<&Document> {
+        let index = match self.versions.binary_search(|document| document.cmp_version(id)) {
+            Found(i) => i,
+            NotFound(i) => {
+                if i > 0 {
+                    i - 1
+                } else {
+                    0
+                }
+            }
+        };
+        self.versions.get(index)
+    }
 }
 
 
@@ -145,7 +177,7 @@ impl<'a> Icecore<'a>{
     pub fn get(&self, id: u64, version: Option<u64>) -> String {
         let index = self.document_index.get_version_index(id);
         let doc = match version {
-            Some(v) => &index.versions[v.to_uint().unwrap() - 1],
+            Some(v) => index.find_version(v.to_u64().unwrap()).unwrap(),
             None => index.versions.last().expect("no document versions found"),
         };
         self.store.read(&doc.hash)
