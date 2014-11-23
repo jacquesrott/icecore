@@ -7,7 +7,7 @@ use rust_crypto::digest::Digest;
 
 pub trait DataStore {
     fn write(&self, data: String) -> String;
-    fn read(&self, hash: String) -> String;
+    fn read(&self, hash: &String) -> String;
 }
 
 
@@ -30,7 +30,7 @@ impl FileStore{
         }
     }
 
-    fn get_path(&self, hash: String) -> Path {
+    fn get_path(&self, hash: &String) -> Path {
         self.root.clone().join(hash)
     }
 }
@@ -62,7 +62,7 @@ impl DataStore for FileStore{
         hashbits.as_slice().to_hex()
     }
 
-    fn read(&self, hash: String) -> String {
+    fn read(&self, hash: &String) -> String {
         println!("Read:\t\t\"{}\"", hash);
         let path = self.get_path(hash);
         match File::open(&path).read_to_string() {

@@ -1,26 +1,39 @@
 extern crate getopts;
 extern crate icecore;
 
-use icecore::data::{FileStore, DataStore};
 use getopts::{optopt, optflag, getopts, usage};
 use std::os;
 
+use icecore::data::FileStore;
+use icecore::ic::Icecore;
 
-fn insert(data: String) {
-    let store = FileStore::new(String::from_str("./_documents"));
-    let hash = store.write(data);
-    select(&store, hash);
+
+fn insert(ic: &mut Icecore, data: String) {
+    ic.insert(data);
 }
 
 
-fn select(store: &FileStore, hash: String) {
-    let data = store.read(hash);
+fn get(ic: &mut Icecore, id: u64) {
+    let data = ic.get(id, None);
     println!("{}", data);
+}
+
+fn demo(ic: &mut Icecore) {
+    let id = ic.insert(String::from_str("foo"));
+    println!("new document: id={}", id);
+    println!("get({}, None) -> {}", id, ic.get(id, None));
+
+    ic.update(id, String::from_str("bar"));
+    println!("get({}, None) -> {}", id, ic.get(id, None));
+    println!("get({}, 1) -> {}", id, ic.get(id, Some(1u64)));
 }
 
 
 fn main() {
     let args: Vec<String> = os::args();
+    
+    let store = box FileStore::new(String::from_str("_documents"));
+    let mut ic = Icecore::new(store);
 
     match args[1].as_slice() {
         "insert" => {
@@ -40,7 +53,10 @@ fn main() {
             }
 
             let data = matches.opt_str("d").unwrap();
-            insert(data);
+            insert(&mut ic, data);
+        },
+        "demo" => {
+            demo(&mut ic);
         },
         _ => {
             println!("Command not found.");
