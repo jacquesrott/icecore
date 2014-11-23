@@ -6,10 +6,16 @@ use getopts::{optopt, optflag, getopts, usage};
 use std::os;
 
 
-fn insert(data: &str) {
-    let store = FileStore::new("./_documents");
+fn insert(data: String) {
+    let store = FileStore::new(String::from_str("./_documents"));
     let hash = store.write(data);
-    store.read(hash.as_slice());
+    select(&store, hash);
+}
+
+
+fn select(store: &FileStore, hash: String) {
+    let data = store.read(hash);
+    println!("{}", data);
 }
 
 
@@ -34,7 +40,7 @@ fn main() {
             }
 
             let data = matches.opt_str("d").unwrap();
-            insert(data.as_slice());
+            insert(data);
         },
         _ => {
             println!("Command not found.");

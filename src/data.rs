@@ -6,8 +6,8 @@ use rust_crypto::digest::Digest;
 
 
 pub trait DataStore {
-    fn write(&self, data: &str) -> String;
-    fn read(&self, hash: &str) -> Vec<u8>;
+    fn write(&self, data: String) -> String;
+    fn read(&self, hash: String) -> String;
 }
 
 
@@ -17,8 +17,8 @@ pub struct FileStore{
 
 
 impl FileStore{
-    pub fn new(path: &str) -> FileStore {
-        let root = Path::new(path);
+    pub fn new(path: String) -> FileStore {
+        let root = Path::new(path.as_slice());
 
         match fs::mkdir_recursive(&root, USER_RWX) {
             Ok(_) => {},
@@ -30,14 +30,14 @@ impl FileStore{
         }
     }
 
-    fn get_path(&self, hash: &str) -> Path {
+    fn get_path(&self, hash: String) -> Path {
         self.root.clone().join(hash)
     }
 }
 
 
 impl DataStore for FileStore{
-    fn write(&self, data: &str) -> String {
+    fn write(&self, data: String) -> String {
         let data_bytes = data.as_bytes();
         let mut h = Md5::new();
         h.input(data_bytes);
@@ -62,9 +62,12 @@ impl DataStore for FileStore{
         hashbits.as_slice().to_hex()
     }
 
-    fn read(&self, hash: &str) -> Vec<u8> {
+    fn read(&self, hash: String) -> String {
         println!("Read:\t\t\"{}\"", hash);
         let path = self.get_path(hash);
-        File::open(&path).read_to_end().unwrap()
+        match File::open(&path).read_to_string() {
+            Ok(s) => s,
+            Err(e) => panic!("File error: {}", e),
+        }
     }
 }
