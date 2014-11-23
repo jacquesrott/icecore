@@ -42,7 +42,7 @@ impl VersionIndex {
                 if i > 0 {
                     i - 1
                 } else {
-                    0
+                    return None
                 }
             }
         };

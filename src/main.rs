@@ -6,6 +6,7 @@ use std::os;
 
 use icecore::data::FileStore;
 use icecore::ic::Icecore;
+use icecore::api;
 
 
 fn demo(ic: &mut Icecore) {
@@ -84,6 +85,9 @@ fn main() {
         },
         "demo" => {
             demo(&mut ic);
+        },
+        "server" => {
+            api::run(&mut ic);
         },
         _ => {
             println!("Command not found.");
