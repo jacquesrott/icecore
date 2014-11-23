@@ -1,5 +1,6 @@
+use std::io::{File};
+use std::io::fs::PathExtensions;
 use data::DataStore;
-
 
 pub struct Document{
     id: u64,
@@ -30,6 +31,41 @@ impl DocumentIndex {
         }
     }
 
+    fn dump(&self, w: &mut Writer) {
+        w.write_be_u64(self.documents.len().to_u64().unwrap());
+        for &ref index in self.documents.iter() {
+            w.write_be_u64(index.document_id);
+            w.write_be_u64(index.versions.len().to_u64().unwrap());
+            for &ref doc in index.versions.iter() {
+                w.write_be_u64(doc.version);
+                w.write_str(doc.hash.as_slice());
+            }
+        }
+    }
+
+    fn load(&mut self, r: &mut Reader) {
+        let document_count = r.read_be_u64().unwrap();
+        for i in range(0, document_count) {
+            let id = r.read_be_u64().unwrap();
+            let version_count = r.read_be_u64().unwrap();
+            let mut index = VersionIndex {
+                document_id: id,
+                versions: Vec::new(),
+            };
+            for j in range(0, version_count) {
+                let version = r.read_be_u64().unwrap();
+                let hash = r.read_exact(32).unwrap();  // hex encoded md5
+                let doc = Document {
+                    id: id,
+                    version: version,
+                    hash: String::from_utf8(hash).unwrap(),
+                };
+                index.versions.push(doc);
+            }
+            self.documents.push(index);
+        }
+    }
+
     fn get_version_index(&self, id: u64) -> &VersionIndex {
         self.documents.index(&(id - 1).to_uint().unwrap())
     }
@@ -55,6 +91,8 @@ impl DocumentIndex {
 
 
 pub struct Icecore<'a>{
+    path: Path,
+    index_file_path: Path,
     store: Box<DataStore + 'a>,
     transaction_log: Vec<Transaction>,
     document_index: DocumentIndex,
@@ -62,12 +100,29 @@ pub struct Icecore<'a>{
 
 
 impl<'a> Icecore<'a>{
-    pub fn new(data_store: Box<DataStore + 'a>) -> Icecore<'a>{
+    pub fn new(path: Path, data_store: Box<DataStore + 'a>) -> Icecore<'a>{
+        let index_file_path = path.clone().join("_documents.index");
         Icecore {
+            path: path,
+            index_file_path: index_file_path,
             store: data_store,
             transaction_log: Vec::new(),
             document_index: DocumentIndex::new(),
         }
+    }
+
+    pub fn load(&mut self) {
+        if !self.index_file_path.exists() {
+            println!("no document index file found");
+            return;
+        }
+        let mut reader = File::open(&self.index_file_path).unwrap();
+        self.document_index.load(&mut reader);
+    }
+
+    pub fn dump(&mut self) {
+        let mut writer = File::create(&self.index_file_path).unwrap();
+        self.document_index.dump(&mut writer);
     }
 
     fn get_next_transaction_id(&self) -> u64 {
