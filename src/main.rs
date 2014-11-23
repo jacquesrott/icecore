@@ -3,21 +3,10 @@ extern crate icecore;
 
 use getopts::{optopt, optflag, getopts, usage};
 use std::os;
-use std::str::FromStr;
 
 use icecore::data::FileStore;
 use icecore::ic::Icecore;
 
-
-fn insert(ic: &mut Icecore, data: String) {
-    ic.insert(data);
-}
-
-
-fn get(ic: &mut Icecore, id: u64) {
-    let data = ic.get(id, None);
-    println!("{}", data);
-}
 
 fn demo(ic: &mut Icecore) {
     let id = ic.insert(String::from_str("foo"));
@@ -26,7 +15,7 @@ fn demo(ic: &mut Icecore) {
 
     ic.update(id, String::from_str("bar"));
     println!("get({}, None) -> {}", id, ic.get(id, None));
-    println!("get({}, 1) -> {}", id, ic.get(id, Some(1u64)));
+    println!("get({}, 1) -> {}", id, ic.get(id, Some(0u64)));
 
     ic.dump();
 }
@@ -61,7 +50,7 @@ fn main() {
             }
 
             let data = matches.opt_str("d").unwrap();
-            insert(&mut ic, data);
+            ic.insert(data);
         },
         "get" => {
             let opts = [
