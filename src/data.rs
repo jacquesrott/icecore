@@ -71,3 +71,66 @@ impl DataStore for FileStore{
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::{DataStore, FileStore};
+    use std::io::fs::{PathExtensions, readdir};
+    use std::io::{TempDir, File};
+
+    #[test]
+    fn fs_new() {
+        let tmpdir = TempDir::new("test-fs").unwrap();
+        let tmpdir = tmpdir.path();
+        let root = tmpdir.join("test1");
+        let root = tmpdir.join("recursive_test");
+
+        let fs = FileStore::new(String::from_str(root.as_str().unwrap()));
+        assert_eq!(fs.root.as_str(), root.as_str());
+        assert!(fs.root.exists());
+        assert!(fs.root.is_dir());
+    }
+
+    #[test]
+    fn fs_get_path() {
+        let tmpdir = TempDir::new("test-fs").unwrap();
+        let tmpdir = tmpdir.path();
+        let root = tmpdir.join("test1");
+
+        let fs = FileStore::new(String::from_str(root.as_str().unwrap()));
+        let path = fs.get_path(&String::from_str("test"));
+
+        assert_eq!(path.as_str(), root.join("test").as_str());
+    }
+
+    #[test]
+    fn fs_write_creates_file() {
+        let tmpdir = TempDir::new("test-fs").unwrap();
+        let tmpdir = tmpdir.path();
+
+        let fs = FileStore::new(String::from_str(tmpdir.as_str().unwrap()));
+
+        let hash = fs.write(String::from_str("test-data"));
+        let file = tmpdir.join(hash);
+
+        assert!(file.exists());
+        assert!(file.is_file());
+
+        let content = File::open(&file).read_to_string().unwrap();
+        assert_eq!(content.as_slice(), "test-data");
+    }
+
+    #[test]
+    fn fs_read_proper_file() {
+        let tmpdir = TempDir::new("test-fs").unwrap();
+        let tmpdir = tmpdir.path();
+
+        let fs = FileStore::new(String::from_str(tmpdir.as_str().unwrap()));
+
+        let hash = fs.write(String::from_str("test-data"));
+
+        let content = fs.read(&hash);
+        assert_eq!(content.as_slice(), "test-data");
+    }
+}
