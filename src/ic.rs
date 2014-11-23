@@ -35,8 +35,8 @@ pub struct VersionIndex {
 
 
 impl VersionIndex {
-    pub fn find_version(&self, id: u64) -> Option<&Document> {
-        let index = match self.versions.binary_search(|document| document.cmp_version(id)) {
+    pub fn find_version(&self, version: u64) -> Option<&Document> {
+        let index = match self.versions.binary_search(|document| document.cmp_version(version)) {
             Found(i) => i,
             NotFound(i) => {
                 if i > 0 {
