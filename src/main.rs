@@ -8,9 +8,8 @@ use std::os;
 
 fn insert(data: &str) {
     let store = FileStore::new("./_documents");
-    let hash =  store.write(data);
-    println!("stored as {}", hash);
-    println!("data: {}", store.read(&hash));
+    let hash = store.write(data);
+    store.read(hash.as_slice());
 }
 
 
