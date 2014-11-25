@@ -21,7 +21,7 @@ impl Document {
 
 
 pub struct Transaction{
-    version: u64,
+    pub version: u64,
 }
 
 
@@ -49,7 +49,7 @@ impl VersionIndex {
 
 
 pub struct DocumentIndex {
-    documents: Vec<VersionIndex>,
+    pub documents: Vec<VersionIndex>,
 }
 
 

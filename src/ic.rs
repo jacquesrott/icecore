@@ -80,3 +80,103 @@ impl<'a> Icecore<'a>{
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::Icecore;
+    use data::FileStore;
+    use document::{Transaction, DocumentIndex};
+    use std::io::fs::PathExtensions;
+    use std::io::TempDir;
+
+    fn get_icecore<'a>(tmpdir: &Path) -> Icecore<'a> {
+        let tmpdir_string = String::from_str(tmpdir.as_str().unwrap());
+        let store = box FileStore::new(tmpdir_string);
+        let ic = Icecore::new(tmpdir.clone(), store);
+
+        return ic;
+    }
+
+    fn get_mut_icecore<'a>(mut tmpdir: &TempDir) -> Icecore<'a> {
+        let tmpdir = tmpdir.path();
+        let tmpdir_string = String::from_str(tmpdir.as_str().unwrap());
+        let store = box FileStore::new(tmpdir_string);
+        let mut ic = Icecore::new(tmpdir.clone(), store);
+
+        return ic;
+    }
+
+    #[test]
+    fn icecore_new_sets_proper_index_file_path() {
+        let tmpdir = TempDir::new("test").unwrap();
+        let tmpdir = tmpdir.path();
+        let ic = get_icecore(tmpdir);
+        let expected = tmpdir.join("_documents.index");
+        let expected = expected.as_str().unwrap();
+        assert_eq!(ic.index_file_path.as_str().unwrap(), expected);
+    }
+
+    #[test]
+    fn icecore_new_sets_proper_path() {
+        let tmpdir = TempDir::new("test").unwrap();
+        let tmpdir = tmpdir.path();
+        let ic = get_icecore(tmpdir);
+        let expected = tmpdir.as_str().unwrap();
+
+        assert_eq!(ic.path.as_str().unwrap(), expected);
+    }
+
+    #[test]
+    fn icecore_get_next_transaction_id_returns_proper_id() {
+        let mut tmpdir = TempDir::new("test").unwrap();
+        let mut ic = get_mut_icecore(&tmpdir);
+        ic.transaction_log.push(Transaction {version: 1u64});
+
+        assert_eq!(ic.get_next_transaction_id(), 2u64);
+    }
+
+    #[test]
+    fn icecore_insert_adds_new_document_to_document_index() {
+        let mut tmpdir = TempDir::new("test").unwrap();
+        let mut ic = get_mut_icecore(&tmpdir);
+        assert_eq!(ic.document_index.documents.len(), 0);
+
+        let id = ic.insert(String::from_str("test-data"));
+        assert_eq!(ic.document_index.documents.len(), 1);
+    }
+
+    #[test]
+    fn icecore_insert_returns_id_created() {
+        let mut tmpdir = TempDir::new("test").unwrap();
+        let mut ic = get_mut_icecore(&tmpdir);
+        let id = ic.insert(String::from_str("test-data"));
+
+        assert_eq!(id, ic.document_index.documents[0].document_id);
+    }
+
+    #[test]
+    fn icecore_dump_creates_proper_dump_file() {
+        let mut tmpdir = TempDir::new("test").unwrap();
+        let mut ic = get_mut_icecore(&tmpdir);
+        assert_eq!(ic.index_file_path.exists(), false);
+        ic.dump();
+        assert_eq!(ic.index_file_path.exists(), true);
+    }
+
+    #[test]
+    fn icecore_load_loads_all_documents() {
+        let mut tmpdir = TempDir::new("test").unwrap();
+        let mut ic = get_mut_icecore(&tmpdir);
+        let id1 = ic.insert(String::from_str("test-data"));
+        let id2 = ic.insert(String::from_str("test-data2"));
+        ic.dump();
+
+        ic.document_index = DocumentIndex::new();
+        assert_eq!(ic.document_index.documents.len(), 0);
+
+        ic.load();
+        assert_eq!(ic.document_index.documents.len(), 2);
+
+        assert_eq!(ic.document_index.documents[0].document_id, id1);
+        assert_eq!(ic.document_index.documents[1].document_id, id2);
+    }
+}
