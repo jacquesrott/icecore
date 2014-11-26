@@ -61,13 +61,13 @@ impl DocumentIndex {
     }
 
     pub fn dump(&self, w: &mut Writer) {
-        w.write_be_u64(self.documents.len().to_u64().unwrap());
+        let _ = w.write_be_u64(self.documents.len().to_u64().unwrap());
         for &ref index in self.documents.iter() {
-            w.write_be_u64(index.document_id);
-            w.write_be_u64(index.versions.len().to_u64().unwrap());
+            let _ = w.write_be_u64(index.document_id);
+            let _ = w.write_be_u64(index.versions.len().to_u64().unwrap());
             for &ref doc in index.versions.iter() {
-                w.write_be_u64(doc.version);
-                w.write_str(doc.hash.as_slice());
+                let _ = w.write_be_u64(doc.version);
+                let _ = w.write_str(doc.hash.as_slice());
             }
         }
     }
@@ -183,7 +183,7 @@ mod tests {
             let version = di.get_version_index(1u64);
             assert_eq!(version.document_id, 3u64);
         }
-        let mut version = di.get_version_index_mut(1u64);
+        let version = di.get_version_index_mut(1u64);
         assert_eq!(version.document_id, 3u64);
     }
 

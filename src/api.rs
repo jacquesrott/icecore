@@ -23,18 +23,18 @@ pub fn run(ic: &mut Icecore) {
                     let len = stream.read_be_u32().unwrap();
                     let data = stream.read_exact(len.to_uint().unwrap()).unwrap();
                     let id = ic.insert(String::from_utf8(data).unwrap());
-                    stream.write_be_u64(id);
+                    let _ = stream.write_be_u64(id);
                 },
-            
+
                 UPDATE => {
                     let id = stream.read_be_u64().unwrap();
-                    let v = stream.read_be_u64().unwrap();
+                    let _ = stream.read_be_u64().unwrap();
                     let len = stream.read_be_u32().unwrap();
                     let data = stream.read_exact(len.to_uint().unwrap()).unwrap();
                     ic.update(id, String::from_utf8(data).unwrap());
-                    stream.write_u8(0u8);
+                    let _ = stream.write_u8(0u8);
                 },
-            
+
                 GET => {
                     let id = stream.read_be_u64().unwrap();
                     let v = stream.read_be_u64().unwrap();
@@ -42,20 +42,20 @@ pub fn run(ic: &mut Icecore) {
                     let data = ic.get(id, version);
                     let bytes = data.as_bytes();
                     println!("{}", bytes);
-                    stream.write_be_u32(bytes.len().to_u32().unwrap());
-                    stream.write(bytes);
+                    let _ = stream.write_be_u32(bytes.len().to_u32().unwrap());
+                    let _ = stream.write(bytes);
                 },
-                
+
                 QUIT => {
                     println!("QUIT");
                     break;
                 },
-                
+
                 _ => {
                     println!("Invalid command. Disconnecting.");
                     break;
                 }
-                
+
             }
         }
     }

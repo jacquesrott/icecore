@@ -76,14 +76,13 @@ impl DataStore for FileStore{
 #[cfg(test)]
 mod tests {
     use super::{DataStore, FileStore};
-    use std::io::fs::{PathExtensions, readdir};
+    use std::io::fs::PathExtensions;
     use std::io::{TempDir, File};
 
     #[test]
     fn fs_new() {
         let tmpdir = TempDir::new("test-fs").unwrap();
         let tmpdir = tmpdir.path();
-        let root = tmpdir.join("test1");
         let root = tmpdir.join("recursive_test");
 
         let fs = FileStore::new(String::from_str(root.as_str().unwrap()));
