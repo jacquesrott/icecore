@@ -8,8 +8,6 @@ typedef uint64_t Version;
 typedef uint64_t Id;
 
 const Value NONE = 0;
-const unsigned int LEAF_NODE_SIZE = 16;
-const unsigned int MAX_VERSIONS = 1000;
 
 typedef enum {
     OK = 0,
@@ -17,12 +15,6 @@ typedef enum {
     VERSION_DOES_NOT_EXIST,
     VERSION_SKIPPED,
 } IndexError;
-
-
-typedef struct{
-    Version version;
-    Value values[LEAF_NODE_SIZE];
-} LeafNode;
 
 
 typedef struct IndexNode{

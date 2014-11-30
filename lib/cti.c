@@ -4,6 +4,15 @@
 
 #include "cti.h"
 
+const unsigned int LEAF_NODE_SIZE = 16;
+const unsigned int MAX_VERSIONS = 1000;
+
+typedef struct{
+    Version version;
+    Value values[LEAF_NODE_SIZE];
+} LeafNode;
+
+
 
 LeafNode* leafnode_create(Version version){
     LeafNode* leaf = malloc(sizeof(*leaf));
