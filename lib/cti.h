@@ -46,10 +46,16 @@ typedef struct {
 extern Tree* tree_create(Version version, Tree* base);
 extern size_t tree_capacity(Tree* tree);
 extern void tree_insert(Tree* tree, Id id, Value value);
-extern int tree_get(Tree* tree, Id id, Value* value);
+extern IndexError tree_get(Tree* tree, Id id, Value* value);
 extern void tree_delete(Tree* tree);
 extern size_t tree_size(Tree* tree);
 extern void tree_dump(Tree* tree);
 
+extern Index* index_create();
+extern IndexError index_insert(Index* idx, Id id, Version version, Value value);
+extern IndexError index_get(Index* idx, Id id, Version version, Value* value);
+extern size_t index_size(Index* idx);
+extern void index_delete(Index* idx);
+extern void index_walk(Index* idx, Version version, void (*callback)(Value value));
 
 #endif

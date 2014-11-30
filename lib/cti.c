@@ -88,6 +88,25 @@ void node_dump(IndexNode* node, unsigned int depth, unsigned int indent){
     }
 }
 
+void node_walk(IndexNode* node, unsigned int depth, void (*callback)(Value value)) {
+    if (node == NULL){
+        return;
+    }
+    if (depth == 0){
+        LeafNode* leaf = (LeafNode*)node;
+        for(int i = 0; i < LEAF_NODE_SIZE; i++){
+            Value value = leaf->values[i];
+            if (value != NONE){
+                callback(value);
+            }
+        }
+    }
+    else{
+        node_walk(node->children[0], depth - 1, callback);
+        node_walk(node->children[1], depth - 1, callback);
+    }
+}
+
 
 Tree* tree_create(Version version, Tree* base) {
     Tree* tree = malloc(sizeof(*tree));
@@ -152,7 +171,7 @@ void tree_insert(Tree* tree, Id id, Value value) {
     leaf->values[id % LEAF_NODE_SIZE] = value;
 }
 
-int tree_get(Tree* tree, Id id, Value* value){
+IndexError tree_get(Tree* tree, Id id, Value* value){
     if (id > tree_capacity(tree)){
         return NONE;
     }
@@ -184,6 +203,10 @@ void tree_dump(Tree* tree){
     node_dump(tree->root, tree->depth, 0);
 }
 
+void tree_walk(Tree* tree, void (*callback)(Value value)) {
+    node_walk(tree->root, tree->depth, callback);
+}
+
 
 Index* index_create() {
     Index* idx = malloc(sizeof(*idx));
@@ -193,7 +216,7 @@ Index* index_create() {
     return idx;
 }
 
-int index_insert(Index* idx, Id id, Version version, Value value) {
+IndexError index_insert(Index* idx, Id id, Version version, Value value) {
     assert(version > 0);
     if (version > idx->last_version + 1) {
         return VERSION_SKIPPED;
@@ -209,7 +232,7 @@ int index_insert(Index* idx, Id id, Version version, Value value) {
 }
 
 
-int index_get(Index* idx, Id id, Version version, Value* value){
+IndexError index_get(Index* idx, Id id, Version version, Value* value){
     if (version > idx->last_version) {
         return VERSION_DOES_NOT_EXIST;
     }
@@ -237,6 +260,17 @@ void index_delete(Index* idx) {
 }
 
 
+void index_walk(Index* idx, Version version, void (*callback)(Value value)) {
+    Tree* tree = idx->trees[version];
+    tree_walk(tree, callback);
+}
+
+
+void print_value(Value value){
+    printf("%llu\n", value);
+}
+
+
 int main(int argc, char** argv) {
     Index* idx = index_create();
     for(int i=1;i<50;i++){
@@ -250,6 +284,7 @@ int main(int argc, char** argv) {
         int error = index_get(idx, i, 20, &val);
         printf("%i: %llu (error=%i)\n", i, val, error);
     }
+    index_walk(idx, 40, &print_value);
     tree_dump(idx->trees[40]);
     printf("index size = %zu bytes\n", index_size(idx));
     index_delete(idx);
