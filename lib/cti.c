@@ -7,6 +7,7 @@
 const unsigned int LEAF_NODE_SIZE = 16;
 const unsigned int MAX_VERSIONS = 1000;
 
+
 typedef struct{
     Version version;
     Value values[LEAF_NODE_SIZE];
@@ -35,16 +36,16 @@ LeafNode* leafnode_copy(LeafNode* base, Version version){
 IndexNode* indexnode_create(Version version){
     IndexNode* node = malloc(sizeof(*node));
     node->version = version;
-    node->children[0] = NULL;
-    node->children[1] = NULL;
+    for(unsigned int i = 0; i < INDEX_NODE_SIZE; i++) {
+        node->children[i] = NULL;
+    }
     return node;
 }
 
 IndexNode* indexnode_copy(IndexNode* base, Version version){
     IndexNode* node = malloc(sizeof(*node));
     node->version = version;
-    node->children[0] = base->children[0];
-    node->children[1] = base->children[1];
+    memcpy(node->children, base->children, sizeof(*node->children) * INDEX_NODE_SIZE);
     return node;
 }
 
@@ -54,9 +55,9 @@ void node_delete(IndexNode* node, Version version, unsigned int depth) {
         return;
     }
     if (depth != 0) {
-        node_delete(node->children[0], version, depth - 1);
-        node_delete(node->children[1], version, depth - 1);
-        
+        for(unsigned int i = 0; i < INDEX_NODE_SIZE; i++) {
+            node_delete(node->children[i], version, depth - 1);
+        }
     }
     free(node);
 }
@@ -69,8 +70,9 @@ size_t node_size(IndexNode* node, Version version, unsigned int depth) {
         return sizeof(LeafNode);
     }
     size_t size = sizeof(*node);
-    size += node_size(node->children[0], version, depth - 1);
-    size += node_size(node->children[1], version, depth - 1);
+    for(unsigned int i = 0; i < INDEX_NODE_SIZE; i++) {
+        size += node_size(node->children[i], version, depth - 1);
+    }
     return size;
 }
 
@@ -92,8 +94,9 @@ void node_dump(IndexNode* node, unsigned int depth, unsigned int indent){
     }
     else{
         printf("<%p> version=%llu\n", node, node->version);
-        node_dump(node->children[0], depth - 1, indent + 1);
-        node_dump(node->children[1], depth - 1, indent + 1);
+        for(unsigned int i = 0; i < INDEX_NODE_SIZE; i++) {
+            node_dump(node->children[i], depth - 1, indent + 1);
+        }
     }
 }
 
@@ -111,8 +114,9 @@ void node_walk(IndexNode* node, unsigned int depth, void (*callback)(Value value
         }
     }
     else{
-        node_walk(node->children[0], depth - 1, callback);
-        node_walk(node->children[1], depth - 1, callback);
+        for(unsigned int i = 0; i < INDEX_NODE_SIZE; i++) {
+            node_walk(node->children[i], depth - 1, callback);
+        }
     }
 }
 
@@ -123,8 +127,9 @@ Tree* tree_create(Version version, Tree* base) {
     IndexNode* root = indexnode_create(version);
     
     if (base != NULL) {
-        root->children[0] = base->root->children[0];
-        root->children[1] = base->root->children[1];
+        for(unsigned int i = 0; i < INDEX_NODE_SIZE; i++) {
+            root->children[i] = base->root->children[i];
+        }
         tree->depth = base->depth;
     }
     else{
@@ -137,6 +142,10 @@ Tree* tree_create(Version version, Tree* base) {
 
 size_t tree_capacity(Tree* tree){
     return LEAF_NODE_SIZE * (1 << tree->depth);
+}
+
+unsigned int get_child_index(Id x, int i) {
+    return (x & INDEX_NODE_MASK << (INDEX_NODE_SIZE * i)) >> (INDEX_NODE_SIZE * i);
 }
 
 void tree_insert(Tree* tree, Id id, Value value) {
@@ -153,7 +162,7 @@ void tree_insert(Tree* tree, Id id, Value value) {
     IndexNode* node = tree->root;
 
     for(int i = tree->depth - 1; i >= 0; i--) {
-        Version child_index = (x & (1 << i)) >> i;
+        unsigned int child_index = get_child_index(x, i);
         IndexNode* child = node->children[child_index];
         if (child == NULL){
             if (i == 0) {
@@ -187,7 +196,7 @@ IndexError tree_get(Tree* tree, Id id, Value* value){
     IndexNode* node = tree->root;
     Id x = id / LEAF_NODE_SIZE;
     for(int i = tree->depth - 1; i >= 0; i--) {
-        Version child_index = (x & (1 << i)) >> i;
+        unsigned int child_index = get_child_index(x, i);
         IndexNode* child = node->children[child_index];
         if (child == NULL){
             return DOCUMENT_DOES_NOT_EXIST;

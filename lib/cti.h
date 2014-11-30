@@ -2,12 +2,18 @@
 #define INDEX_H
 
 #include <stdint.h>
+#include <string.h>
 
 typedef uint64_t Value;
 typedef uint64_t Version;
 typedef uint64_t Id;
 
 const Value NONE = 0;
+const unsigned int INDEX_NODE_BITS = 2;
+
+const unsigned int INDEX_NODE_SIZE = 1 << INDEX_NODE_BITS;
+const Version INDEX_NODE_MASK = INDEX_NODE_SIZE - 1;
+
 
 typedef enum {
     OK = 0,
@@ -19,7 +25,7 @@ typedef enum {
 
 typedef struct IndexNode{
     Version version;
-    struct IndexNode* children[2];
+    struct IndexNode* children[INDEX_NODE_SIZE];
 } IndexNode;
 
 typedef struct{
