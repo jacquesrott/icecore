@@ -35,7 +35,7 @@ ic_Cursor* ic_cursor_create(ic_CursorNextFunc next, void* memo) {
 
 void _array_next(void* memo, ic_Document** value) {
     ArrayCursorMemo* m = (ArrayCursorMemo*)memo;
-    if (m->next != m->last) {
+    if (m->next <= m->last) {
         *value = *(m->next++);
         return;
     }
@@ -47,7 +47,7 @@ void _array_next(void* memo, ic_Document** value) {
 ic_Cursor* ic_cursor_from_array(ic_Document** array, size_t n) {
     ArrayCursorMemo* memo = malloc(sizeof(*memo));
     memo->array = array;
-    memo->next = NULL;
+    memo->next = array;
     memo->last = array + (n - 1);
     return ic_cursor_create(&_array_next, memo);
 }

@@ -41,7 +41,6 @@ inline ic_Document* ic_cursor_peek(ic_Cursor* cursor) {
 }
 
 inline ic_Document* ic_cursor_next(ic_Cursor* cursor) {
-    assert(cursor->head != NULL);
     cursor->next(cursor->memo, &cursor->head);
     return cursor->head;
 }
