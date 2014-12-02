@@ -1,8 +1,0 @@
-[package]
-
-name = "icecore"
-version = "0.0.1"
-authors = ["Johannes Dollinger <emulbreh@googlemail.com>", "Jacques Rott <jacques.rott@gmail.com>"]
-
-[dependencies]
-rust-crypto = "*"
