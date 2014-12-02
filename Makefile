@@ -1,19 +1,26 @@
-.PHONY: lib
+.PHONY: clean
 	
+COMPILER = gcc
 COMPILER_OPTIONS = -Wall -Werror
+COMPILE = $(COMPILER) -c $(COMPILER_OPTIONS)
+LINKER = $(COMPILER)
+LINKER_OPTIONS = $(COMPILER_OPTIONS)
+LINK = $(LINKER) $(LINKER_OPTIONS)
 
-all: link
 
-lib: lib/libcti.so
-	
-lib/libcti.so: lib/cti.c lib/cti.h
-	gcc -c $(COMPILER_OPTIONS) -fpic lib/cti.c && gcc -shared -o lib/libcti.so lib/cti.o
+all: bin/icecore
 
-cursor: src/cursor.c
-	gcc -c $(COMPILER_OPTIONS) src/cursor.c -o build/cursor.o
+clean:
+	rm -rf build && rm -rf bin
 
-main: src/main.c
-	gcc -c $(COMPILER_OPTIONS) src/main.c -o build/main.o
+build:
+	mkdir build
 
-link: cursor main
-	gcc build/*.o -o icecore
+build/%.o: src/%.c build
+	$(COMPILE) $< -o $@
+
+bin:
+	mkdir bin
+
+bin/icecore: build/main.o build/cursor.o bin
+	$(LINK) build/main.o build/cursor.o -o bin/icecore
