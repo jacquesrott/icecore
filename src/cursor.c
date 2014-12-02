@@ -75,37 +75,42 @@ void _merge_next(void* memo, ic_Document** value) {
         int cmp = m->cmp(a, b);
         if (cmp == 0){
             *value = m->merge(a, b);
-            a = ic_cursor_next(m->a_cursor);
-            b = ic_cursor_next(m->b_cursor);
+            ic_cursor_next(m->a_cursor);
+            ic_cursor_next(m->b_cursor);
             return;
         }
         else if (cmp > 0){
             if (BITS_SET(type, RIGHT)) {
-                *value = m->merge(NULL, b);
+                *value = m->merge(NULL, b);;
+                ic_cursor_next(m->b_cursor);
+                return;
             }
-            b = ic_cursor_next(m->a_cursor);
-            return;
+            b = ic_cursor_next(m->b_cursor);
         }
         else{
             if (BITS_SET(type, LEFT)) {
-                *value = m->merge(a, NULL);
+                *value = m->merge(a, NULL);;
+                ic_cursor_next(m->a_cursor);
+                return;
             }
             a = ic_cursor_next(m->a_cursor);
-            return;
         }
     }
-    if (a != NULL) {
-        *value = a;
+
+    if (a != NULL && BITS_SET(type, LEFT)) {
+        *value = m->merge(a, NULL);;
         ic_cursor_next(m->a_cursor);
         return;
     }
-    else if (b != NULL) {
-        *value = b;
+    else if (b != NULL && BITS_SET(type, RIGHT)) {
+        *value = m->merge(NULL, b);;
         ic_cursor_next(m->b_cursor);
         return;
     }
+
     *value = NULL;
     free(memo);
+
 }
 
 ic_Cursor* ic_cursor_join(ic_Cursor* ac, ic_Cursor* bc, ic_MergeType type, ic_CompareFunc cmp, ic_MergeFunc merge) {
