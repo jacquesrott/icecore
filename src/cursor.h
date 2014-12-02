@@ -35,6 +35,7 @@ void ic_cursor_delete(ic_Cursor* cursor);
 bool ic_cursor_done(ic_Cursor* cursor);
 ic_Cursor* ic_cursor_join(ic_Cursor* ac, ic_Cursor* bc, ic_MergeType type, ic_CompareFunc cmp, ic_MergeFunc merge);
 ic_Cursor* ic_cursor_merge(ic_Cursor* ac, ic_Cursor* bc, ic_MergeType type);
+size_t ic_cursor_to_array(ic_Cursor* cursor, ic_Document** array, size_t n);
 
 inline ic_Document* ic_cursor_peek(ic_Cursor* cursor) {
     return cursor->head;

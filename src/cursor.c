@@ -32,26 +32,6 @@ ic_Cursor* ic_cursor_create(ic_CursorNextFunc next, void* memo) {
     return cursor;
 }
 
-
-void _array_next(void* memo, ic_Document** value) {
-    ArrayCursorMemo* m = (ArrayCursorMemo*)memo;
-    if (m->next <= m->last) {
-        *value = *(m->next++);
-        return;
-    }
-    *value = NULL;
-    free(memo);
-}
-
-
-ic_Cursor* ic_cursor_from_array(ic_Document** array, size_t n) {
-    ArrayCursorMemo* memo = malloc(sizeof(*memo));
-    memo->array = array;
-    memo->next = array;
-    memo->last = array + (n - 1);
-    return ic_cursor_create(&_array_next, memo);
-}
-
 extern inline ic_Document* ic_cursor_peek(ic_Cursor* cursor);
 
 extern inline ic_Document* ic_cursor_next(ic_Cursor* cursor);
@@ -136,5 +116,36 @@ ic_Document* merge_docs(ic_Document* a, ic_Document* b){
 
 ic_Cursor* ic_cursor_merge(ic_Cursor* ac, ic_Cursor* bc, ic_MergeType type) {
     return ic_cursor_join(ac, bc, type, &cmp_docs, &merge_docs);
+}
+
+
+void _array_next(void* memo, ic_Document** value) {
+    ArrayCursorMemo* m = (ArrayCursorMemo*)memo;
+    if (m->next <= m->last) {
+        *value = *(m->next++);
+        return;
+    }
+    *value = NULL;
+    free(memo);
+}
+
+ic_Cursor* ic_cursor_from_array(ic_Document** array, size_t n) {
+    ArrayCursorMemo* memo = malloc(sizeof(*memo));
+    memo->array = array;
+    memo->next = array;
+    memo->last = array + (n - 1);
+    return ic_cursor_create(&_array_next, memo);
+}
+
+
+size_t ic_cursor_to_array(ic_Cursor* cursor, ic_Document** array, size_t n) {
+    size_t i = 0;
+    for(ic_Document* doc = ic_cursor_peek(cursor); doc != NULL; doc = ic_cursor_next(cursor)) {
+        array[i++] = doc;
+        if (i == n) {
+            break;
+        }
+    }
+    return i;
 }
 
