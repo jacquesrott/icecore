@@ -25,9 +25,11 @@ bin:
 bin/icecore: build/main.o build/cursor.o bin
 	$(LINK) build/main.o build/cursor.o -o bin/icecore
 
-bin/test-icecore: build/cursor.o bin src/tests/cursor.c src/tests/main.c
-	$(LINK) src/tests/main.c build/cursor.o -o bin/test-icecore
+bin/test-icecore: build/cursor.o bin src/tests/cursor.c src/tests/main.c build/btree.o
+	$(LINK) src/tests/main.c build/cursor.o build/btree.o -o bin/test-icecore
 
 test: bin/test-icecore
 	bin/test-icecore
 
+bin/btree: build/btree.o bin
+	$(LINK) build/btree.o -o bin/btree
