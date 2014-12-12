@@ -8,11 +8,11 @@ int btree_test_intcmp(const void* a, const void* b){
 void test_btree(){
     BTree* tree = btree_create(&btree_test_intcmp);
     for (intptr_t i = 0; i < 10; i++) {
-        intptr_t x = 4 * i;
+        intptr_t x = 4 * i + 1;
         btree_insert(tree, (void*)x, (void*)x);
     }
     for (intptr_t i = 0; i < 10; i++) {
-        intptr_t x = 4 * i + 1;
+        intptr_t x = 4 * i;
         btree_insert(tree, (void*)x, (void*)x);
     }
     for (intptr_t i = 0; i < 10; i++) {
@@ -31,7 +31,6 @@ void test_btree(){
         sprintf(msg, "tree[%li] == %li", i, i);
         sput_fail_unless(value == (void*)i, msg);
     }
-
 }
 
 

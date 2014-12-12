@@ -103,9 +103,8 @@ BTreeNode* split_root(BTree* tree, const void* key) {
     new_root->keys[1] = sibling->keys[0];
     tree->root = new_root;
     tree->depth++;
-    // the path to `key` might have changed. update.
-    if (tree->cmp(key, new_root->keys[0]) <= 0) {
-        return new_root->children[0];
+    if (tree->cmp(key, sibling->keys[0]) < 0) {
+        return old_root;
     }
     return sibling;
 }
