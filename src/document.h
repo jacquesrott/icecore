@@ -3,12 +3,12 @@
 
 #include <stdint.h>
 
-typedef uint64_t ic_Version;
-typedef uint64_t ic_Id;
+typedef uint64_t Version;
+typedef uint64_t Id;
 
 typedef struct{
-    ic_Id id;
-    ic_Version version;
-} ic_Document;
+    Id id;
+    Version version;
+} Document;
 
 #endif

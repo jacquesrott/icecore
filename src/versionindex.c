@@ -2,23 +2,23 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "dvidx.h"
+#include "versionindex.h"
 #include "document.h"
 #include "cursor.h"
 
 const unsigned int LEAF_NODE_SIZE = 16;
 const unsigned int MAX_VERSIONS = 1000;
 
-const ic_Version INDEX_NODE_MASK = INDEX_NODE_SIZE - 1;
+const Version INDEX_NODE_MASK = INDEX_NODE_SIZE - 1;
 
 
 typedef struct{
-    ic_Version version;
-    ic_Document* values[LEAF_NODE_SIZE];
+    Version version;
+    Document* values[LEAF_NODE_SIZE];
 } LeafNode;
 
 
-LeafNode* leafnode_create(ic_Version version){
+LeafNode* leafnode_create(Version version){
     LeafNode* leaf = malloc(sizeof(*leaf));
     leaf->version = version;
     for (unsigned int i = 0; i < LEAF_NODE_SIZE; i++) {
@@ -27,7 +27,7 @@ LeafNode* leafnode_create(ic_Version version){
     return leaf;
 }
 
-LeafNode* leafnode_copy(LeafNode* base, ic_Version version){
+LeafNode* leafnode_copy(LeafNode* base, Version version){
     LeafNode* leaf = malloc(sizeof(*leaf));
     leaf->version = version;
     for (unsigned int i = 0; i < LEAF_NODE_SIZE; i++) {
@@ -36,7 +36,7 @@ LeafNode* leafnode_copy(LeafNode* base, ic_Version version){
     return leaf;
 }
 
-IndexNode* indexnode_create(ic_Version version){
+IndexNode* indexnode_create(Version version){
     IndexNode* node = malloc(sizeof(*node));
     node->version = version;
     for(unsigned int i = 0; i < INDEX_NODE_SIZE; i++) {
@@ -45,7 +45,7 @@ IndexNode* indexnode_create(ic_Version version){
     return node;
 }
 
-IndexNode* indexnode_copy(IndexNode* base, ic_Version version){
+IndexNode* indexnode_copy(IndexNode* base, Version version){
     IndexNode* node = malloc(sizeof(*node));
     node->version = version;
     memcpy(node->children, base->children, sizeof(*node->children) * INDEX_NODE_SIZE);
@@ -53,7 +53,7 @@ IndexNode* indexnode_copy(IndexNode* base, ic_Version version){
 }
 
 
-void node_delete(IndexNode* node, ic_Version version, unsigned int depth) {
+void node_delete(IndexNode* node, Version version, unsigned int depth) {
     if (node == NULL || node->version != version) {
         return;
     }
@@ -65,7 +65,7 @@ void node_delete(IndexNode* node, ic_Version version, unsigned int depth) {
     free(node);
 }
 
-size_t node_size(IndexNode* node, ic_Version version, unsigned int depth) {
+size_t node_size(IndexNode* node, Version version, unsigned int depth) {
     if(node == NULL || node->version != version){
         return 0;
     }
@@ -91,7 +91,7 @@ void node_dump(IndexNode* node, unsigned int depth, unsigned int indent){
         LeafNode* leaf = (LeafNode*)node;
         printf("<%p> ", leaf);
         for(int i = 0; i < LEAF_NODE_SIZE; i++){
-            ic_Document* doc = leaf->values[i];
+            Document* doc = leaf->values[i];
             if (doc == NULL){
                 printf("-, ");
             }
@@ -109,14 +109,14 @@ void node_dump(IndexNode* node, unsigned int depth, unsigned int indent){
     }
 }
 
-void node_walk(IndexNode* node, unsigned int depth, void (*callback)(ic_Document* value)) {
+void node_walk(IndexNode* node, unsigned int depth, void (*callback)(Document* value)) {
     if (node == NULL){
         return;
     }
     if (depth == 0){
         LeafNode* leaf = (LeafNode*)node;
         for(int i = 0; i < LEAF_NODE_SIZE; i++){
-            ic_Document* value = leaf->values[i];
+            Document* value = leaf->values[i];
             if (value != NULL){
                 callback(value);
             }
@@ -130,7 +130,7 @@ void node_walk(IndexNode* node, unsigned int depth, void (*callback)(ic_Document
 }
 
 
-Tree* tree_create(ic_Version version, Tree* base) {
+Tree* tree_create(Version version, Tree* base) {
     Tree* tree = malloc(sizeof(*tree));
     tree->version = version;
     IndexNode* root;
@@ -152,11 +152,11 @@ size_t tree_capacity(Tree* tree){
     return LEAF_NODE_SIZE * (1 << tree->depth);
 }
 
-unsigned int get_child_index(ic_Id x, int i) {
+unsigned int get_child_index(Id x, int i) {
     return (x & (INDEX_NODE_MASK << (INDEX_NODE_BITS * i))) >> (INDEX_NODE_BITS * i);
 }
 
-void tree_insert(Tree* tree, ic_Id id, ic_Document* value) {
+void tree_insert(Tree* tree, Id id, Document* value) {
     size_t capacity = tree_capacity(tree);
     while(id >= capacity){
         IndexNode* new_root = indexnode_create(tree->version);
@@ -166,7 +166,7 @@ void tree_insert(Tree* tree, ic_Id id, ic_Document* value) {
         capacity *= INDEX_NODE_SIZE;
     }
     
-    ic_Id x = (id - 1) / LEAF_NODE_SIZE;
+    Id x = (id - 1) / LEAF_NODE_SIZE;
     IndexNode* node = tree->root;
 
     for(int i = tree->depth - 1; i >= 0; i--) {
@@ -197,13 +197,13 @@ void tree_insert(Tree* tree, ic_Id id, ic_Document* value) {
     leaf->values[(id - 1) % LEAF_NODE_SIZE] = value;
 }
 
-ic_IndexError tree_get(Tree* tree, ic_Id id, ic_Document** value){
+IndexError tree_get(Tree* tree, Id id, Document** value){
     if (id > tree_capacity(tree)){
         *value = NULL;
         return DOCUMENT_DOES_NOT_EXIST;
     }
     IndexNode* node = tree->root;
-    ic_Id x = id / LEAF_NODE_SIZE;
+    Id x = id / LEAF_NODE_SIZE;
     for(int i = tree->depth - 1; i >= 0; i--) {
         unsigned int child_index = get_child_index(x, i);
         IndexNode* child = node->children[child_index];
@@ -230,7 +230,7 @@ void tree_dump(Tree* tree){
     node_dump(tree->root, tree->depth, 0);
 }
 
-void tree_walk(Tree* tree, void (*callback)(ic_Document* value)) {
+void tree_walk(Tree* tree, void (*callback)(Document* value)) {
     node_walk(tree->root, tree->depth, callback);
 }
 
@@ -246,7 +246,7 @@ typedef struct{
     size_t depth;
 } TreeCursorMemo;
 
-void _tree_cursor_next(void* memo, ic_Document** value) {
+void _tree_cursor_next(void* memo, Document** value) {
     TreeCursorMemo* m = (TreeCursorMemo*)memo;
     TreeCursorStackFrame* frame = m->stack;
     
@@ -281,7 +281,7 @@ done:
     free(m);
 }
 
-ic_Cursor* tree_cursor(Tree* tree) {
+Cursor* tree_cursor(Tree* tree) {
     TreeCursorMemo* memo = malloc(sizeof(*memo));
     memo->tree = tree;
     memo->stack = calloc(sizeof(TreeCursorStackFrame), tree->depth + 1);
@@ -294,19 +294,19 @@ ic_Cursor* tree_cursor(Tree* tree) {
         node = node->children[0];
     }
     
-    return ic_cursor_create(&_tree_cursor_next, memo);
+    return cursor_create(&_tree_cursor_next, memo);
 }
 
 
-ic_DocumentVersionIndex* ic_dvidx_create() {
-    ic_DocumentVersionIndex* idx = malloc(sizeof(*idx));
+DocumentVersionIndex* versionindex_create() {
+    DocumentVersionIndex* idx = malloc(sizeof(*idx));
     idx->trees = calloc(MAX_VERSIONS, sizeof(*idx->trees));
     idx->trees[0] = tree_create(0, NULL);
     idx->last_version = 0;
     return idx;
 }
 
-ic_IndexError ic_dvidx_insert(ic_DocumentVersionIndex* idx, ic_Id id, ic_Version version, ic_Document* value) {
+IndexError versionindex_insert(DocumentVersionIndex* idx, Id id, Version version, Document* value) {
     assert(version > 0);
     if (version > idx->last_version + 1) {
         return VERSION_SKIPPED;
@@ -322,7 +322,7 @@ ic_IndexError ic_dvidx_insert(ic_DocumentVersionIndex* idx, ic_Id id, ic_Version
 }
 
 
-ic_IndexError ic_dvidx_get(ic_DocumentVersionIndex* idx, ic_Id id, ic_Version version, ic_Document** value){
+IndexError versionindex_get(DocumentVersionIndex* idx, Id id, Version version, Document** value){
     //printf("getting document id=%llu version=%llu\n", id, version);
     if (version > idx->last_version) {
         return VERSION_DOES_NOT_EXIST;
@@ -334,7 +334,7 @@ ic_IndexError ic_dvidx_get(ic_DocumentVersionIndex* idx, ic_Id id, ic_Version ve
     return tree_get(tree, id, value);
 }
 
-size_t ic_dvidx_size(ic_DocumentVersionIndex* idx){
+size_t versionindex_size(DocumentVersionIndex* idx){
     size_t size = sizeof(*idx) + idx->last_version * sizeof(*idx->trees);
     for (int i = idx->last_version; i >= 0; i--) {
         size += tree_size(idx->trees[i]);
@@ -342,7 +342,7 @@ size_t ic_dvidx_size(ic_DocumentVersionIndex* idx){
     return size;
 }
 
-void ic_dvidx_delete(ic_DocumentVersionIndex* idx) {
+void versionindex_delete(DocumentVersionIndex* idx) {
     for (int i = idx->last_version; i >= 0; i--) {
         tree_delete(idx->trees[i]);
     }
@@ -350,12 +350,12 @@ void ic_dvidx_delete(ic_DocumentVersionIndex* idx) {
     free(idx);
 }
 
-ic_Cursor* ic_dvidx_cursor(ic_DocumentVersionIndex* idx, ic_Version version) {
+Cursor* versionindex_cursor(DocumentVersionIndex* idx, Version version) {
     Tree* tree = idx->trees[version];
     return tree_cursor(tree);
 }
 
-void ic_dvidx_walk(ic_DocumentVersionIndex* idx, ic_Version version, void (*callback)(ic_Document* value)) {
+void versionindex_walk(DocumentVersionIndex* idx, Version version, void (*callback)(Document* value)) {
     Tree* tree = idx->trees[version];
     tree_walk(tree, callback);
 }
