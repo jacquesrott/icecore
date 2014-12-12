@@ -5,24 +5,9 @@
 
 #define BTREE_ORDER 4
 
-struct BTreeNode;
 typedef struct BTreeNode BTreeNode;
-
-struct BTreeNode{
-   unsigned int size;
-   const void* keys[BTREE_ORDER];
-   BTreeNode* children[BTREE_ORDER];
-};
-
-
+typedef struct BTree BTree;
 typedef int (*BTreeKeyCmpFunc)(const void*, const void*);
-
-typedef struct {
-   BTreeKeyCmpFunc cmp;
-   BTreeNode* root;
-   int depth;
-} BTree;
-
 
 BTree* btree_create(BTreeKeyCmpFunc);
 void btree_delete(BTree*);

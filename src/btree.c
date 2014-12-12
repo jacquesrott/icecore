@@ -6,6 +6,19 @@
 #include "btree.h"
 
 
+struct BTreeNode{
+   unsigned int size;
+   const void* keys[BTREE_ORDER];
+   BTreeNode* children[BTREE_ORDER];
+};
+
+struct BTree{
+   BTreeKeyCmpFunc cmp;
+   BTreeNode* root;
+   int depth;
+};
+
+
 BTreeNode* create_node() {
    BTreeNode* node = malloc(sizeof(*node));
    node->size = 0;
