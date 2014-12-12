@@ -1,5 +1,5 @@
-#ifndef IC_CURSOR_H
-#define IC_CURSOR_H
+#ifndef CURSOR_H
+#define CURSOR_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -8,11 +8,11 @@
 #include "document.h"
 
 
-typedef void (*ic_CursorNextFunc)(void*, ic_Document**);
-typedef int64_t (*ic_CompareFunc)(ic_Document*, ic_Document*);
-typedef ic_Document* (*ic_MergeFunc)(ic_Document*, ic_Document*);
+typedef void (*CursorNextFunc)(void*, Document**);
+typedef int64_t (*CompareFunc)(Document*, Document*);
+typedef Document* (*MergeFunc)(Document*, Document*);
 
-typedef uint64_t ic_CursorKey;
+typedef uint64_t CursorKey;
 
 typedef enum {
     NONE = 0,
@@ -20,28 +20,28 @@ typedef enum {
     LEFT = 3, // 2 | INNER
     RIGHT = 5, // 4 | INNER
     OUTER = 7, // LEFT | RIGHT | INNER
-} ic_MergeType;
+} MergeType;
 
 
 typedef struct {
     void* memo;
-    ic_Document* head;
-    ic_CursorNextFunc next;
-} ic_Cursor;
+    Document* head;
+    CursorNextFunc next;
+} Cursor;
 
-ic_Cursor* ic_cursor_create(ic_CursorNextFunc next, void* memo);
-ic_Cursor* ic_cursor_from_array(ic_Document** array, size_t n);
-void ic_cursor_delete(ic_Cursor* cursor);
-bool ic_cursor_done(ic_Cursor* cursor);
-ic_Cursor* ic_cursor_join(ic_Cursor* ac, ic_Cursor* bc, ic_MergeType type, ic_CompareFunc cmp, ic_MergeFunc merge);
-ic_Cursor* ic_cursor_merge(ic_Cursor* ac, ic_Cursor* bc, ic_MergeType type);
-size_t ic_cursor_to_array(ic_Cursor* cursor, ic_Document** array, size_t n);
+Cursor* cursor_create(CursorNextFunc next, void* memo);
+Cursor* cursor_from_array(Document** array, size_t n);
+void cursor_delete(Cursor* cursor);
+bool cursor_done(Cursor* cursor);
+Cursor* cursor_join(Cursor* ac, Cursor* bc, MergeType type, CompareFunc cmp, MergeFunc merge);
+Cursor* cursor_merge(Cursor* ac, Cursor* bc, MergeType type);
+size_t cursor_to_array(Cursor* cursor, Document** array, size_t n);
 
-inline ic_Document* ic_cursor_peek(ic_Cursor* cursor) {
+inline Document* cursor_peek(Cursor* cursor) {
     return cursor->head;
 }
 
-inline ic_Document* ic_cursor_next(ic_Cursor* cursor) {
+inline Document* cursor_next(Cursor* cursor) {
     cursor->next(cursor->memo, &cursor->head);
     return cursor->head;
 }

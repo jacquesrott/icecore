@@ -202,7 +202,7 @@ void btree_get(const BTree* tree, const void* key, void** value) {
    *value = node->children[i];
 }
 
-ic_Cursor* btree_range_cursor(const BTree* tree, const void* from_key, const void* to_key) {
+Cursor* btree_range_cursor(const BTree* tree, const void* from_key, const void* to_key) {
    return NULL;
 }
 
