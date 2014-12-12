@@ -5,6 +5,8 @@
 #include "versionindex.h"
 #include "document.h"
 #include "cursor.h"
+#include "error.h"
+
 
 const unsigned int LEAF_NODE_SIZE = 16;
 const unsigned int MAX_VERSIONS = 1000;
@@ -197,10 +199,10 @@ void tree_insert(Tree* tree, Id id, Document* value) {
     leaf->values[(id - 1) % LEAF_NODE_SIZE] = value;
 }
 
-IndexError tree_get(Tree* tree, Id id, Document** value){
+ice_t tree_get(Tree* tree, Id id, Document** value){
     if (id > tree_capacity(tree)){
         *value = NULL;
-        return DOCUMENT_DOES_NOT_EXIST;
+        return ICE_DOCUMENT_DOES_NOT_EXIST;
     }
     IndexNode* node = tree->root;
     Id x = id / LEAF_NODE_SIZE;
@@ -208,13 +210,13 @@ IndexError tree_get(Tree* tree, Id id, Document** value){
         unsigned int child_index = get_child_index(x, i);
         IndexNode* child = node->children[child_index];
         if (child == NULL){
-            return DOCUMENT_DOES_NOT_EXIST;
+            return ICE_DOCUMENT_DOES_NOT_EXIST;
         }
         node = child;
     }
     LeafNode* leaf = (LeafNode*) node;
     *value = leaf->values[id % LEAF_NODE_SIZE];
-    return OK;
+    return ICE_OK;
 }
 
 void tree_delete(Tree* tree) {
@@ -306,10 +308,10 @@ DocumentVersionIndex* versionindex_create() {
     return idx;
 }
 
-IndexError versionindex_insert(DocumentVersionIndex* idx, Id id, Version version, Document* value) {
+ice_t versionindex_insert(DocumentVersionIndex* idx, Id id, Version version, Document* value) {
     assert(version > 0);
     if (version > idx->last_version + 1) {
-        return VERSION_SKIPPED;
+        return ICE_VERSION_SKIPPED;
     }
     Tree* tree = idx->trees[version];
     if (tree == NULL) {
@@ -322,14 +324,14 @@ IndexError versionindex_insert(DocumentVersionIndex* idx, Id id, Version version
 }
 
 
-IndexError versionindex_get(DocumentVersionIndex* idx, Id id, Version version, Document** value){
+ice_t versionindex_get(DocumentVersionIndex* idx, Id id, Version version, Document** value){
     //printf("getting document id=%llu version=%llu\n", id, version);
     if (version > idx->last_version) {
-        return VERSION_DOES_NOT_EXIST;
+        return ICE_VERSION_DOES_NOT_EXIST;
     }
     Tree* tree = idx->trees[version];
     if (tree == NULL){
-        return VERSION_DOES_NOT_EXIST;
+        return ICE_VERSION_DOES_NOT_EXIST;
     }
     return tree_get(tree, id, value);
 }

@@ -5,6 +5,7 @@
 #include "cursor.h"
 #include "document.h"
 #include "versionindex.h"
+#include "error.h"
 
 const size_t NUM_DOCS = 70;
 
@@ -49,9 +50,9 @@ int main(int argc, char** argv) {
     DocumentVersionIndex* idx = versionindex_create();
     for(int i = 0; i < NUM_DOCS; i++){
         Document* doc = docs1[i];
-        IndexError error = versionindex_insert(idx, doc->id, i+1, doc);
+        ice_t error = versionindex_insert(idx, doc->id, i+1, doc);
         if (error) {
-            printf("index error %i\n", error);
+            printf("index error %i: %s\n", error, error_string(error));
         }
         //tree_dump(idx->trees[i+1]);
     }
