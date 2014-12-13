@@ -10,6 +10,7 @@ struct BTreeNode{
    unsigned int size;
    const void* keys[BTREE_ORDER];
    BTreeNode* children[BTREE_ORDER];
+   BTreeNode* next;
 };
 
 struct BTree{
@@ -22,6 +23,7 @@ struct BTree{
 BTreeNode* create_node() {
    BTreeNode* node = malloc(sizeof(*node));
    node->size = 0;
+   node->next = NULL;
    for (size_t i = 0; i < BTREE_ORDER; i++) {
        node->children[i] = NULL;
        node->keys[i] = NULL;
@@ -87,6 +89,10 @@ BTreeNode* make_sibling(BTreeNode* node) {
     BTreeNode* sibling = create_node();
     sibling->size = node->size - BTREE_ORDER / 2;
     node->size = BTREE_ORDER / 2;
+    if (node->next != NULL) {
+        sibling->next = node->next;
+    }
+    node->next = sibling;
     //printf("split %p %i/%i\n", node, node->size, sibling->size);
     memcpy(sibling->children, node->children + node->size, sibling->size * sizeof(BTreeNode*));
     memcpy(sibling->keys, node->keys + node->size, sibling->size * sizeof(void*));
@@ -213,6 +219,38 @@ void btree_get(const BTree* tree, const void* key, void** value) {
        return;
    }
    *value = node->children[i];
+}
+
+
+typedef struct {
+    BTreeNode* node;
+    size_t i;
+} BTreeCursorMemo;
+
+
+void _btree_cursor_next(void* memo, Document** next) {
+    BTreeCursorMemo* m = (BTreeCursorMemo*)memo;
+    if (m->i >= m->node->size) {
+        m->node = m->node->next;
+        m->i = 0;
+    }
+    if (m->node != NULL) {
+        *next = (Document*)m->node->children[m->i++];
+        return;
+    }
+    *next = NULL;
+    free(memo);
+}
+
+Cursor* btree_cursor(const BTree* tree) {
+    BTreeCursorMemo* memo = malloc(sizeof(*memo));
+    BTreeNode* node = tree->root;
+    for (int depth = tree->depth - 1; depth > 0; depth--) {
+        node = node->children[0];
+    }
+    memo->node = node;
+    memo->i = 0;
+    return cursor_create(&_btree_cursor_next, memo);
 }
 
 Cursor* btree_range_cursor(const BTree* tree, const void* from_key, const void* to_key) {

@@ -15,6 +15,7 @@ int main(int argc, char** argv){
 
 	sput_enter_suite("btree");
 	sput_run_test(test_btree);
+    sput_run_test(test_btree_cursor);
 
 	sput_enter_suite("filestore");
 	sput_run_test(test_filestore);
