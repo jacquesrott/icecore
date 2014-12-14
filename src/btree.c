@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "utils.h"
 #include "cursor.h"
 #include "btree.h"
 
@@ -14,7 +15,7 @@ struct BTreeNode{
 };
 
 struct BTree{
-   BTreeKeyCmpFunc cmp;
+   KeyCmpFunc cmp;
    BTreeNode* root;
    int depth;
 };
@@ -35,40 +36,12 @@ void delete_node(BTreeNode* node){
     free(node);
 }
 
-int binsearch_left(const void*const* keys, int lo, int hi, BTreeKeyCmpFunc cmp, const void* key) {
-    while (lo < hi) {
-        int mid = (hi + lo) / 2;
-        int c = cmp(key, keys[mid]);
-        if (c <= 0) {
-            hi = mid;
-        }
-        else{
-            lo = mid + 1;
-        }
-    }
-    return lo;
-}
-
-int binsearch_right(const void*const* keys, int lo, int hi, BTreeKeyCmpFunc cmp, const void* key) {
-    while (lo < hi) {
-        int mid = (hi + lo) / 2;
-        int c = cmp(key, keys[mid]);
-        if (c < 0) {
-            hi = mid;
-        }
-        else{
-            lo = mid + 1;
-        }
-    }
-    return lo;
-}
-
 int find_index(const BTree* tree, const BTreeNode* node, const void* key) {
-    return binsearch_left(node->keys, 0, node->size, tree->cmp, key);
+    return binsearch_left_cmp(node->keys, 0, node->size, tree->cmp, key);
 }
 
 int find_interval_index(const BTree* tree, const BTreeNode* node, const void* key) {
-    return binsearch_right(node->keys, 1, node->size, tree->cmp, key) - 1;
+    return binsearch_right_cmp(node->keys, 1, node->size, tree->cmp, key) - 1;
 }
 
 void node_insert(BTree* tree, BTreeNode* node, const void* key, const void* value) {
@@ -158,7 +131,7 @@ void dump_node(BTreeNode* node, int depth, unsigned int indent) {
 
 /* public api */
 
-BTree* btree_create(BTreeKeyCmpFunc cmp) {
+BTree* btree_create(KeyCmpFunc cmp) {
    BTree* tree = malloc(sizeof(*tree));
    tree->cmp = cmp;
    tree->root = create_node();

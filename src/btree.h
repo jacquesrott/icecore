@@ -3,14 +3,14 @@
 
 #include <stdlib.h>
 #include "cursor.h"
+#include "utils.h"
 
 #define BTREE_ORDER 4
 
 typedef struct BTreeNode BTreeNode;
 typedef struct BTree BTree;
-typedef int (*BTreeKeyCmpFunc)(const void*, const void*);
 
-BTree* btree_create(BTreeKeyCmpFunc);
+BTree* btree_create(KeyCmpFunc);
 void btree_delete(BTree*);
 void btree_insert(BTree*, const void* key, const void* value);
 void btree_get(const BTree*, const void* key, void** value);
