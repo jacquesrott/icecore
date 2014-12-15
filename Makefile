@@ -1,6 +1,6 @@
 .PHONY: clean test
 
-COMPILER = gcc
+COMPILER = clang
 COMPILER_OPTIONS = -Wall -Werror -I lib/sput-1.3.0 -std=c99
 COMPILE = $(COMPILER) -c $(COMPILER_OPTIONS)
 LINKER = $(COMPILER)

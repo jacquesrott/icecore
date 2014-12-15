@@ -1,3 +1,9 @@
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "../document.h"
 #include "../cursor.h"
 
@@ -12,7 +18,7 @@ Document* make_document(uint64_t id) {
 
 void print_cursor(Cursor* cursor) {
     for (Document* doc = cursor_peek(cursor); doc != NULL; doc=cursor_next(cursor)) {
-        printf("%llu, ", doc->id);
+        printf("%"PRIu64", ", doc->id);
     }
     printf("\n");
 }
@@ -36,7 +42,7 @@ void test_cursor(){
     Cursor* c2 = cursor_from_array(docs2, NUM_DOCS);
     Cursor* c3 = cursor_from_array(docs3, NUM_DOCS);
     Cursor* c = cursor_merge(c2, c3, INNER);
-    
+
     Document* output[4];
     Document* expected[4] = {docs2[0], docs2[3], docs2[6], docs2[9]};
 
