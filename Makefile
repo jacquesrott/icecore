@@ -25,10 +25,11 @@ bin:
 bin/icecore: build/main.o build/cursor.o build/versionindex.o build/error.o build/filestore.o bin
 	$(LINK) build/main.o build/cursor.o build/versionindex.o build/error.o -o bin/icecore
 
-bin/test-icecore: build/cursor.o bin src/tests/cursor.c src/tests/main.c build/btree.o
-	$(LINK) src/tests/main.c build/cursor.o build/btree.o -o bin/test-icecore
+bin/test-icecore: build/cursor.o bin src/tests/cursor.c src/tests/main.c build/btree.o build/filestore.o src/tests/filestore.c
+	$(LINK) src/tests/main.c build/cursor.o build/btree.o build/filestore.o -o bin/test-icecore
 
 test: bin/test-icecore
+	rm -rf /tmp/test-filestore/
 	bin/test-icecore
 
 bin/btree: build/btree.o bin
