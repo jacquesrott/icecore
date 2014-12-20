@@ -1,6 +1,10 @@
-# icecore
+# ıcecore
 
 > Git for machines
+
+## Requirements
+
+- libsodium
 
 ## Usage
 

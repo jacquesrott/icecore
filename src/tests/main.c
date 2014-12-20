@@ -4,6 +4,7 @@
 #include "cursor.c"
 #include "btree.c"
 #include "filestore.c"
+#include "array.c"
 
 
 int main(int argc, char** argv){
@@ -17,6 +18,10 @@ int main(int argc, char** argv){
 
 	sput_enter_suite("filestore");
 	sput_run_test(test_filestore);
+
+	sput_enter_suite("array");
+	sput_run_test(test_array);
+	sput_run_test(test_big_array);
 
 	sput_finish_testing();
 	return sput_get_return_value();
