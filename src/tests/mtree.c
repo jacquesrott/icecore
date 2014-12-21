@@ -7,7 +7,6 @@ void test_mtree(){
     MTree* tree = mtree_create(4, 4, false, NULL);
     for (uintptr_t i = 1; i < 10; i++) {
         mtree_insert(tree, i, (void*)i);
-        mtree_dump(tree);
     }
     mtree_dump(tree);
     Document* a[20];
