@@ -41,11 +41,11 @@ void delete_node(BTreeNode* node){
     free(node);
 }
 
-int find_index(const BTree* tree, const BTreeNode* node, const void* key) {
+static inline int find_index(const BTree* tree, const BTreeNode* node, const void* key) {
     return binsearch_left_cmp(&KEY(node, 0), 0, node->size, tree->cmp, key);
 }
 
-int find_interval_index(const BTree* tree, const BTreeNode* node, const void* key) {
+static inline int find_interval_index(const BTree* tree, const BTreeNode* node, const void* key) {
     return binsearch_right_cmp(&KEY(node, 0), 1, node->size, tree->cmp, key) - 1;
 }
 
@@ -76,7 +76,7 @@ BTreeNode* make_sibling(BTree* tree, unsigned int depth, BTreeNode* node) {
     node->next = sibling;
     //printf("split %p %i/%i\n", node, node->size, sibling->size);
     memcpy(
-        &CHILD(tree, depth, sibling, 0), 
+        &CHILD(tree, depth, sibling, 0),
         &CHILD(tree, depth, node, node->size),
         sibling->size * sizeof(BTreeNode*)
     );
@@ -126,7 +126,7 @@ void dump_node(BTree* tree, BTreeNode* node, int depth, unsigned int indent) {
         printf("NULL\n");
         return;
     }
-    
+
     if (depth == 0) {
         printf("<leaf %p size=%i, keys=%p, children=%p> {", node, node->size, &KEY(node, 0), &CHILD(tree, depth, node, 0));
         for (size_t i = 0; i < node->size; i++) {
@@ -169,7 +169,7 @@ void btree_delete(BTree* tree) {
 }
 
 void btree_dump(BTree* tree) {
-    dump_node(tree, ROOT(tree), tree->depth - 1, 0); 
+    dump_node(tree, ROOT(tree), tree->depth - 1, 0);
 }
 
 void btree_insert(BTree* tree, const void* key, const void* value) {

@@ -10,11 +10,6 @@
 #include "mtree.h"
 
 
-typedef struct{
-    //struct MTree_;
-    Version version;
-} VersionedTree;
-
 typedef struct {
     Version last_version;
     MTree* version_tree;
