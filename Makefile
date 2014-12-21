@@ -32,3 +32,6 @@ bin/test-icecore: build/cursor.o bin src/tests/cursor.c src/tests/main.c build/b
 test: bin/test-icecore
 	rm -rf /tmp/test-filestore/
 	bin/test-icecore
+
+bin/icecore-server: build/server.o bin
+	$(LINK) build/server.o -o bin/icecore-server
