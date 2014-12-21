@@ -153,6 +153,7 @@ void mtree_insert(MTree* tree, uintptr_t key, const void* value) {
 }
 
 ice_t mtree_get(MTree* tree, uintptr_t key, void** value){
+    //printf("mtree_get()\n");
     if (key > mtree_capacity(tree)){
         *value = NULL;
         return ICE_DOCUMENT_DOES_NOT_EXIST;

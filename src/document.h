@@ -9,6 +9,7 @@ typedef uint64_t Id;
 typedef struct{
     Id id;
     Version version;
+    char* hash;
 } Document;
 
 #endif

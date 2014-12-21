@@ -16,38 +16,29 @@ DocumentVersionIndex* versionindex_create() {
     return idx;
 }
 
-ice_t versionindex_insert(DocumentVersionIndex* idx, Id id, Version version, Document* value) {
-    //printf("versionindex_insert id=%llu, version=%llu, last_version=%llu\n", id, version, idx->last_version);
-    assert(version != 0);
-    assert(version >= idx->last_version);
-    assert(version <= idx->last_version + 1);
-    
-    if (version > idx->last_version + 1) {
-        return ICE_VERSION_SKIPPED;
+
+void versionindex_next_version(DocumentVersionIndex* idx) {
+    MTree* previous = NULL;
+    if (idx->last_version > 0) {
+        mtree_get(idx->version_tree, idx->last_version, (void**)&previous);
+        assert(previous != NULL);
     }
-    
+    MTree* tree = mtree_create(4, 4, true, previous);
+    mtree_insert(idx->version_tree, ++idx->last_version, tree);
+}
+
+
+ice_t versionindex_insert(DocumentVersionIndex* idx, Id id, Document* value) {
     MTree* versioned_tree;
-    if (version == idx->last_version) {
-        mtree_get(idx->version_tree, version, (void**)&versioned_tree);
-        assert(versioned_tree != NULL);
-    }
-    else {
-        MTree* previous = NULL;
-        if (version > 1) {
-            mtree_get(idx->version_tree, version - 1, (void**)&previous);
-            assert(previous != NULL);
-        }
-        versioned_tree = mtree_create(4, 4, true, previous);
-        mtree_insert(idx->version_tree, version, versioned_tree);
-    }
+    mtree_get(idx->version_tree, idx->last_version, (void**)&versioned_tree);
     mtree_insert(versioned_tree, id, value);
-    idx->last_version = version;
     return ICE_OK;
 }
 
 
 ice_t versionindex_get(DocumentVersionIndex* idx, Id id, Version version, Document** value){
-    //printf("getting document id=%llu version=%llu\n", id, version);
+    assert(idx->last_version >= version);
+    printf("getting document id=%llu version=%llu\n", id, version);
     if (version > idx->last_version) {
         return ICE_VERSION_DOES_NOT_EXIST;
     }
