@@ -6,6 +6,7 @@ typedef enum {
     ICE_DOCUMENT_DOES_NOT_EXIST,
     ICE_VERSION_DOES_NOT_EXIST,
     ICE_VERSION_SKIPPED,
+    ICE_SERVER_ERROR,
 } ice_t;
 
 const char* error_string(ice_t code);
