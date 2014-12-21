@@ -28,7 +28,7 @@ IceServer* iceserver_create(const char* ip, int port, sa_family_t family) {
         iceserver_destroy(server);
         return NULL;
     }
-    server->ip = malloc(sizeof(char) * server->addrlen);
+    server->ip = malloc(server->addrlen);
     strcpy(server->ip, ip);
     server->backlog = IC_BACKLOG;
     server->port = port;
@@ -54,7 +54,6 @@ void iceserver_destroy(IceServer* server) {
         free(server->address);
     }
     printf("[ICE-CORE] Server destroyed.\n");
-    server = NULL;
 }
 
 
@@ -171,7 +170,6 @@ void iceserver_run(const IceServer* server) {
         }
     }
 }
-
 
 
 void iceserver_quit_signal(int sig) {
