@@ -5,6 +5,7 @@
 #include "btree.c"
 #include "filestore.c"
 #include "array.c"
+#include "mtree.c"
 
 
 int main(int argc, char** argv){
@@ -24,6 +25,9 @@ int main(int argc, char** argv){
 	sput_run_test(test_array);
 	sput_run_test(test_big_array);
 
+    sput_enter_suite("mtree");
+    sput_run_test(test_mtree);
+	
 	sput_finish_testing();
 	return sput_get_return_value();
 }

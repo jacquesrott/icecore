@@ -61,8 +61,6 @@ int main(int argc, char** argv) {
         Document* doc;
         versionindex_get(idx, i, NUM_DOCS/2, &doc);
     }
-    tree_dump(idx->trees[20]);
-    tree_dump(idx->trees[40]);
     Cursor* dv_cursor = versionindex_cursor(idx, NUM_DOCS/2);
     _print_cursor(dv_cursor);
     cursor_delete(dv_cursor);
