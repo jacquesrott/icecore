@@ -14,45 +14,46 @@
 
 
 IceServer* iceserver_create(const char* ip, int port, sa_family_t family) {
+    printf("[ICE-CORE] Creating server...\n");
     IceServer* server = malloc(sizeof(*server));
-    if(server == NULL) {
-        return NULL;
-    }
+    check(server);
+
     server->family = family;
 
-    if(server->family == AF_INET) {
-        server->addrlen = INET_ADDRSTRLEN;
-    } else if(server->family == AF_INET6) {
-        server->addrlen = INET6_ADDRSTRLEN;
-    } else {
-        iceserver_destroy(server);
-        return NULL;
+    switch(server->family) {
+        case AF_INET:
+            server->addrlen = INET_ADDRSTRLEN;
+            break;
+        case AF_INET6:
+            server->addrlen = INET6_ADDRSTRLEN;
+            break;
+        default:
+            printf("[ICE-CORE] Address family not supported.\n");
+            goto error;
     }
     server->ip = malloc(server->addrlen);
     strcpy(server->ip, ip);
     server->backlog = IC_BACKLOG;
     server->port = port;
     server->run = 0;
+    server->connections = 0;
     server->socket = socket(server->family, SOCK_STREAM, 0);
 
     ice_t address_converted = iceserver_address_create(server);
-    if(address_converted != ICE_OK) {
-        iceserver_destroy(server);
-        return NULL;
-    }
+    check_ok(address_converted);
 
     return server;
+error:
+    iceserver_destroy(server);
+    return NULL;
 }
 
 
 void iceserver_destroy(IceServer* server) {
     close(server->socket);
-    if(server->ip) {
-        free(server->ip);
-    }
-    if(server->address) {
-        free(server->address);
-    }
+    if(server->ip) free(server->ip);
+    if(server->address) free(server->address);
+    free(server);
     printf("[ICE-CORE] Server destroyed.\n");
 }
 
@@ -63,60 +64,54 @@ ice_t iceserver_address_create(IceServer* server) {
     server->address->sin_port = htons(server->port);
 
     int ip_put = inet_pton(server->family, server->ip, &server->address->sin_addr);
-    if(ip_put == -1) {
-        perror("IP ADDRESS CONVERSION");
-        return ICE_SERVER_ERROR;
-    }
+    pcheck_negative(ip_put, "IP ADDRESS CONVERSION");
 
     return ICE_OK;
+error:
+    return ICE_SERVER_ERROR;
 }
 
 
 ice_t iceserver_set_reuse_address(IceServer* server) {
     int yes = 1;
     int set_opt = setsockopt(server->socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-    if(set_opt == -1) {
-        perror("SET SOCKET OPTION SO_REUSEADDR");
-        return ICE_SERVER_ERROR;
-    }
+    pcheck_negative(set_opt, "SET SOCKET OPTION SO_REUSEADDR");
+
     return ICE_OK;
+error:
+    return ICE_SERVER_ERROR;
 }
 
 
 ice_t iceserver_bind(const IceServer* server) {
     socklen_t address_size = sizeof(struct sockaddr_in);
     int binding = bind(server->socket, (struct sockaddr*) server->address, address_size);
-    if(binding == -1) {
-        perror("BIND");
-        return ICE_SERVER_ERROR;
-    }
+    pcheck_negative(binding, "CHECK");
+
     return ICE_OK;
+error:
+    return ICE_SERVER_ERROR;
 }
 
 
 ice_t iceserver_listen(const IceServer* server) {
     printf("[ICE-CORE] Listening on %s:%d\n", server->ip, server->port);
     int listening = listen(server->socket, server->backlog);
-    if(listening == -1) {
-        perror("LISTEN");
-        return ICE_SERVER_ERROR;
-    }
+    pcheck_negative(listening, "LISTEN");
 
     return ICE_OK;
+error:
+    return ICE_SERVER_ERROR;
 }
 
 
 ice_t iceserver_init(IceServer* server) {
-    if(iceserver_set_reuse_address(server) != ICE_OK) {
-        return ICE_SERVER_ERROR;
-    }
-    if(iceserver_bind(server) != ICE_OK) {
-        return ICE_SERVER_ERROR;
-    }
-    if(iceserver_listen(server) != ICE_OK) {
-        return ICE_SERVER_ERROR;
-    }
+    check_ok(iceserver_set_reuse_address(server));
+    check_ok(iceserver_bind(server));
+    check_ok(iceserver_listen(server));
     return ICE_OK;
+error:
+    return ICE_SERVER_ERROR;
 }
 
 
@@ -125,24 +120,17 @@ ice_t iceserver_do_stuff(const int* socket, const struct sockaddr_in* address) {
 
     gettimeofday(&start, NULL);
 
-    if(*socket == -1) {
-        perror("ACCEPT");
-        return ICE_SERVER_ERROR;
-    }
+    pcheck_negative(*socket, "ACCEPT");
 
     char buffer[IC_BUFFER_SIZE];
     memset(buffer, 0, IC_BUFFER_SIZE);
     int r = read(*socket, buffer, IC_BUFFER_SIZE - 1);
-    if(r == -1) {
-        perror("READ");
-        return ICE_SERVER_ERROR;
-    }
+    pcheck_negative(r, "READ");
+
     char ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, (void*)&(address->sin_addr), ip, INET_ADDRSTRLEN);
-    if(ip == NULL) {
-        perror("CLIENT IP CONVERSION");
-        return ICE_SERVER_ERROR;
-    }
+    pcheck(ip, "CLIENT IP CONVERSION");
+
     gettimeofday(&stop, NULL);
     printf("[%s] Read in %u: %s\n", ip, stop.tv_usec - start.tv_usec, buffer);
 
@@ -155,20 +143,30 @@ ice_t iceserver_do_stuff(const int* socket, const struct sockaddr_in* address) {
     printf("[%s] Wrote in %u: %s\n", ip, stop.tv_usec - start.tv_usec, ack);
 
     return ICE_OK;
+error:
+    return ICE_SERVER_ERROR;
 }
 
 
-void iceserver_run(const IceServer* server) {
+void iceserver_run(IceServer* server) {
     socklen_t address_size = sizeof(struct sockaddr_in);
+    int descriptor;
     while(server->run == 0) {
         struct sockaddr_in client_addr;
-        int conn_socket = accept(server->socket, (struct sockaddr*) &client_addr, &address_size);
-        ice_t result = iceserver_do_stuff(&conn_socket, &client_addr);
-        close(conn_socket);
-        if(result != ICE_OK) {
-            break;
-        }
+        descriptor = accept(server->socket, (struct sockaddr*) &client_addr, &address_size);
+        pcheck_negative(descriptor, "ACCEPT DESCRIPTOR");
+        server->connections++;
+        ice_t result = iceserver_do_stuff(&descriptor, &client_addr);
+        printf("[ICE-CORE] Open connections: %u.\n", server->connections);
+        printf("[ICE-CORE] Last descriptor: %d.\n", descriptor);
+        check_ok(result);
+        close(descriptor);
     }
+    return;
+error:
+    server->run = 1;
+    printf("[ICE-CORE] Server unexpectly stopped running.\n");
+    return;
 }
 
 
@@ -185,14 +183,16 @@ int main() {
     int port = 6666;
 
     ic_server = iceserver_create(ip, port, AF_INET);
-    if(iceserver_init(ic_server) != ICE_OK) {
-        iceserver_destroy(ic_server);
-        return EXIT_FAILURE;
-    }
+    pcheck(ic_server, "CREATION");
+    check_ok(iceserver_init(ic_server));
+
     signal(SIGINT, iceserver_quit_signal);
     iceserver_run(ic_server);
     iceserver_destroy(ic_server);
 
     return EXIT_SUCCESS;
+error:
+    if(ic_server) iceserver_destroy(ic_server);
+    return EXIT_FAILURE;
 }
 
