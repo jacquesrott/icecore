@@ -187,6 +187,7 @@ int main() {
     check_ok(iceserver_init(ic_server));
 
     signal(SIGINT, iceserver_quit_signal);
+    signal(SIGQUIT, iceserver_quit_signal);
     iceserver_run(ic_server);
     iceserver_destroy(ic_server);
 
