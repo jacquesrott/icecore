@@ -20,7 +20,8 @@ IceServer* ic_server;
 
 IceServer* iceserver_create(const char* ip, int port, sa_family_t family);
 ice_t iceserver_init(IceServer* server);
-ice_t iceserver_address_create(IceServer* server);
+ice_t iceserver_create_address(IceServer* server);
+ice_t iceserver_create_socket(IceServer* server);
 void iceserver_run(IceServer* server);
 void iceserver_destroy(IceServer* server);
 void iceserver_quit_signal(int sig);

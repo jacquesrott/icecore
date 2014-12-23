@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -37,9 +38,11 @@ IceServer* iceserver_create(const char* ip, int port, sa_family_t family) {
     server->port = port;
     server->run = 0;
     server->connections = 0;
-    server->socket = socket(server->family, SOCK_STREAM, 0);
 
-    ice_t address_converted = iceserver_address_create(server);
+    ice_t socket_created = iceserver_create_socket(server);
+    if(socket_created != ICE_OK) goto error;
+
+    ice_t address_converted = iceserver_create_address(server);
     if(address_converted != ICE_OK) goto error;
 
     return server;
@@ -58,7 +61,7 @@ void iceserver_destroy(IceServer* server) {
 }
 
 
-ice_t iceserver_address_create(IceServer* server) {
+ice_t iceserver_create_address(IceServer* server) {
     server->address = malloc(sizeof(*server->address));
     server->address->sin_family = server->family;
     server->address->sin_port = htons(server->port);
@@ -73,7 +76,7 @@ ice_t iceserver_address_create(IceServer* server) {
 }
 
 
-ice_t iceserver_set_reuse_address(IceServer* server) {
+ice_t iceserver_set_socket_reuse_address(IceServer* server) {
     int yes = 1;
     int set_opt = setsockopt(server->socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
     if(set_opt == -1) {
@@ -109,10 +112,28 @@ ice_t iceserver_listen(const IceServer* server) {
 }
 
 
-ice_t iceserver_init(IceServer* server) {
-    if(iceserver_set_reuse_address(server) != ICE_OK) {
+ice_t iceserver_create_socket(IceServer* server) {
+    server->socket = socket(server->family, SOCK_STREAM, 0);
+
+    if(server->socket == -1) {
+        perror("SOCKET");
         return ICE_SERVER_ERROR;
     }
+
+    if(fcntl(server->socket, F_SETFL, O_NONBLOCK) == -1) {
+        perror("NON BLOCKING");
+        return ICE_SERVER_ERROR;
+    }
+
+    if(iceserver_set_socket_reuse_address(server) != ICE_OK) {
+        return ICE_SERVER_ERROR;
+    }
+
+    return ICE_OK;
+}
+
+
+ice_t iceserver_init(IceServer* server) {
     if(iceserver_bind(server) != ICE_OK) {
         return ICE_SERVER_ERROR;
     }
