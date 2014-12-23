@@ -6,6 +6,14 @@
 typedef uint64_t Version;
 typedef uint64_t Id;
 
+typedef union {
+    struct {
+        uint64_t a;
+        uint64_t b;
+    };
+    unsigned char bytes[16];
+} Hash;
+
 typedef struct{
     Id id;
     Version version;
