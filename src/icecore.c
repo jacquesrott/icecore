@@ -45,6 +45,14 @@ Document* icecore_insert_from_file(Icecore* ic, FILE* file) {
     return icecore_insert(ic, data);
 }
 
+Document* icecore_update_from_file(Icecore* ic, Id id, FILE* file) {
+    long size = get_file_size(file);
+    char data[size + 1];
+    data[size] = '\0';
+    fread(data, size, 1, file);
+    return icecore_update(ic, id, data);
+}
+
 ice_t icecore_get(Icecore* ic, Id id, Version version, Document** doc) {
     //printf("icecore_get()\n");
     return versionindex_get(ic->vindex, id, version, doc);

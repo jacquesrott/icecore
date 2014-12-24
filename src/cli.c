@@ -18,6 +18,13 @@ Icecore* cli_init() {
 }
 
 
+void _show_doc(Document* doc) {
+    char hexhash[DOCUMENT_HEX_HASH_SIZE];
+    get_hex_hash(doc->hash, hexhash);
+    printf("id: %llu\nversion: %llu\nhash: %s\n", doc->id, doc->version, hexhash);
+}
+
+
 int cli_insert(int nargs, char** args) {
     if (nargs == 0) {
         printf("At least one file name is required for `icecore insert\n");
@@ -29,23 +36,39 @@ int cli_insert(int nargs, char** args) {
     FILE* file = fopen(args[0], "r");
     if (file == NULL) {
         printf("cannot open file %s %i\n", args[0], errno);
+        return 1;
     }
     Document* doc = icecore_insert_from_file(ic, file);
     fclose(file);
+    _show_doc(doc);
+    return 0; 
+}
 
-    char hexhash[DOCUMENT_HEX_HASH_SIZE];
-    get_hex_hash(doc->hash, hexhash);
-    printf("inserted document\n  id=%llu\n  version=%llu\n  hash=%s\n", doc->id, doc->version, hexhash);
+int cli_update(int nargs, char** args) {
+    if (nargs != 2) {
+        printf("Usage: icecore update <id> <file>");
+        return 1;
+    }
+    Icecore* ic = cli_init();
+    icecore_next_version(ic);
+    Id id = atoll(args[0]);
+    if (id == 0) {
+        printf("invalid document id: %s\n", args[0]);
+        return 1;
+    }
+    FILE* file = fopen(args[1], "r");
+    if (file == NULL) {
+        printf("cannot open file %s %i\n", args[1], errno);
+        return 1;
+    }
+    Document* doc = icecore_update_from_file(ic, id, file);
+    fclose(file);
+    _show_doc(doc);
     return 0; 
 }
 
 int cli_get(int nargs, char** args) {
     printf("get\n");
-    return 0; 
-}
-
-int cli_update(int nargs, char** args) {
-    printf("update\n");
     return 0; 
 }
 
