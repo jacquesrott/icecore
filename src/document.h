@@ -17,7 +17,11 @@ typedef union {
 typedef struct{
     Id id;
     Version version;
-    char* hash;
+    Hash hash;
 } Document;
+
+
+#define DOCUMENT_HEX_HASH_SIZE 33
+void get_hex_hash(Hash hash, char* hexhash);
 
 #endif

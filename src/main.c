@@ -23,6 +23,14 @@ void show_help() {
         "OPTIONS\n"
         "  --help, -h        Print this help message\n"
         "  --version, -v     Print the icecore version number\n"
+        "\n"
+        "COMMANDS\n"
+        "  insert\n"
+        "  update <id>\n"
+        "  get <id>\n"
+        "  delete <id>\n"
+        "\n"
+        "For more information about icecore visit https://github.com/jacquesrott/icecore/\n"
     , ICECORE_VERSION);
 }
 
@@ -57,7 +65,7 @@ int main(int argc, char** argv) {
         return 1;
     }
     char* command = argv[optind];
-    char** args = argv + optind;
+    char** args = argv + optind + 1;
     int nargs = argc - optind - 1;
     if (strcmp(command, "insert") == 0) {
         return cli_insert(nargs, args);
