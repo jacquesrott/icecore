@@ -18,20 +18,20 @@ static struct option long_options[] = {
 
 void show_help() {
     printf(
-        "icecore %s\n"
+        "Usage: icecore [--help] [--version] <command> [<args>]\n"
         "\n"
         "OPTIONS\n"
-        "  --help, -h        Print this help message\n"
-        "  --version, -v     Print the icecore version number\n"
+        "  --help, -h             Print this help message\n"
+        "  --version, -v          Print the icecore version number\n"
         "\n"
         "COMMANDS\n"
-        "  insert\n"
-        "  update <id>\n"
-        "  get <id>\n"
-        "  delete <id>\n"
+        "  insert <file>          Inserts a new document\n"
+        "  update <id> <file>     Updates a document\n"
+        "  delete <id>            Deletes a document\n"
+        "  get <id> [<version>]   Gets a document's content\n"
         "\n"
         "For more information about icecore visit https://github.com/jacquesrott/icecore/\n"
-    , ICECORE_VERSION);
+    );
 }
 
 int main(int argc, char** argv) {
