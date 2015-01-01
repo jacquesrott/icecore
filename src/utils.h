@@ -7,6 +7,7 @@
 
 typedef int (*KeyCmpFunc)(const void*, const void*);
 
+long get_file_size(FILE *file);
 
 inline int binsearch_left(const intptr_t* keys, int lo, int hi, const intptr_t key) {
     while (lo < hi) {
