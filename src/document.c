@@ -10,3 +10,12 @@ void get_hex_hash(Hash hash, char* str) {
     }
     str[32] = '\0';
 }
+
+HexHash hash_to_hex(Hash hash) {
+    HexHash hh;
+    for (int i = 0; i < 16; i++) {
+        sprintf(hh.chars + 2*i, "%02x", hash.bytes[i]);
+    }
+    hh.chars[32] = '\0';
+    return hh;
+}

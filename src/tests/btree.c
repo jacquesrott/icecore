@@ -1,6 +1,8 @@
 #include <stdio.h>
+
 #include "../btree.h"
 #include "../cursor.h"
+
 
 int btree_test_intcmp(const void* a, const void* b){
     return (int)((intptr_t)a - (intptr_t)b);

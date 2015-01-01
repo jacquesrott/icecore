@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+
 #include "../filestore.h"
+#include "../document.h"
 
 
 void test_filestore() {
@@ -17,17 +19,17 @@ void test_filestore() {
 
     char content[] = "test data";
 
-    char* hash = filestore_write(store, content);
+    Hash hash = filestore_write(store, content);
     char* stored_content = filestore_read(store, hash);
     sput_fail_if(stored_content == NULL, "File could be opened");
 
-    printf("Hash: %s\n", hash);
-    printf("Content: %s\n", stored_content);
+    HexHash hex_hash = hash_to_hex(hash);
+    printf("Hash: %s\n", hex_hash.chars);
+    printf("Stored Content: %s\n", stored_content);
 
     cmp = strcmp(content, stored_content);
     sput_fail_unless(cmp == 0, "File storage wrote the right content into proper file");
 
     filestore_delete(store);
-    free(hash);
     free(stored_content);
 }

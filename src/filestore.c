@@ -51,9 +51,8 @@ Hash filestore_write(const FileStore* filestore, const char* data) {
     MD5_Update(&ctx, data, size);
     MD5_Final(hash.bytes, &ctx);
 
-    char hex_hash[33];
-    get_hex_hash(hash, hex_hash);
-    char* path = path_join(filestore->root, hex_hash);
+    HexHash hex_hash = hash_to_hex(hash);
+    char* path = path_join(filestore->root, hex_hash.chars);
 
     FILE* file = fopen(path, "w");
 
@@ -72,9 +71,8 @@ Hash filestore_write(const FileStore* filestore, const char* data) {
 
 
 char* filestore_read(const FileStore* filestore, Hash hash) {
-    char hex_hash[33];
-    get_hex_hash(hash, hex_hash);
-    char* path = path_join(filestore->root, hex_hash);
+    HexHash hex_hash = hash_to_hex(hash);
+    char* path = path_join(filestore->root, hex_hash.chars);
     FILE* file = fopen(path, "r");
 
     if(file == NULL) {
